@@ -2,7 +2,7 @@ import { EmbeddingSpace } from '../types';
 
 export const embeddingSpaces: EmbeddingSpace[] = [
   {
-    id: 1,
+    id: "1",
     name: "Word2Vec Space",
     description: "Traditional word2vec embeddings",
     points: [
@@ -13,7 +13,7 @@ export const embeddingSpaces: EmbeddingSpace[] = [
     ]
   },
   {
-    id: 2,
+    id: "2",
     name: "GloVe Space",
     description: "Global vectors for word representation",
     points: [
@@ -24,7 +24,7 @@ export const embeddingSpaces: EmbeddingSpace[] = [
     ]
   },
   {
-    id: 3,
+    id: "3",
     name: "FastText Space",
     description: "Subword-based embeddings",
     points: [

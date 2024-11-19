@@ -1,5 +1,5 @@
 export interface EmbeddingSpace {
-  id: number;
+  id: string;
   name: string;
   description: string;
   points: EmbeddingPoint[];

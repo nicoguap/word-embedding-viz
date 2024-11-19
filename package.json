@@ -14,6 +14,7 @@
     "@react-three/drei": "^9.115.0",
     "@react-three/fiber": "^8.17.10",
     "@types/three": "^0.170.0",
+    "openai": "^4.72.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwindcss-animate": "^1.0.7",
