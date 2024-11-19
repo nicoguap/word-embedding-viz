@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { EmbeddingPoint } from '../types';
+import { getCachedEmbedding, setCachedEmbedding } from './cache';
 
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
@@ -8,30 +8,28 @@ const openai = new OpenAI({
 
 export async function getEmbedding(text: string): Promise<number[]> {
   try {
+    // Check cache first
+    const cached = await getCachedEmbedding(text);
+    if (cached) {
+      return cached;
+    }
+
+    // If not in cache, fetch from API
     const response = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: text,
-      dimensions: 3, // Since we're visualizing in 3D
+      dimensions: 10,
       encoding_format: "float",
     });
     
-    return response.data[0].embedding;
+    const embedding = response.data[0].embedding;
+    
+    // Cache the result
+    await setCachedEmbedding(text, embedding);
+    
+    return embedding;
   } catch (error) {
     console.error('Error getting embedding:', error);
     throw error;
   }
-}
-
-export async function getEmbeddingsForWords(words: string[]): Promise<EmbeddingPoint[]> {
-  const embeddings = await Promise.all(
-    words.map(async (word) => {
-      const embedding = await getEmbedding(word);
-      return {
-        word,
-        position: embedding as [number, number, number]
-      };
-    })
-  );
-  
-  return embeddings;
 }
