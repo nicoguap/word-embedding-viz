@@ -1,10 +1,32 @@
 import OpenAI from 'openai';
 import { getCachedEmbedding, setCachedEmbedding } from './cache';
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
-});
+
+// Function to get API key based on environment
+const getApiKey = (): string => {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key is not configured');
+  }
+  
+  return apiKey;
+};
+
+// Create OpenAI client with error handling
+const createOpenAIClient = () => {
+  try {
+    return new OpenAI({
+      apiKey: getApiKey(),
+      dangerouslyAllowBrowser: true
+    });
+  } catch (error) {
+    console.error('Failed to initialize OpenAI client:', error);
+    throw error;
+  }
+};
+
+const openai = createOpenAIClient();
 
 export async function getEmbedding(text: string): Promise<number[]> {
   try {
