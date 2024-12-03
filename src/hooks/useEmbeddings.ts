@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { EmbeddingSpace, EmbeddingPoint } from '../types';
+import { EmbeddingSpace } from '../types';
 import { getEmbedding } from '../services/openai';
 
 const INITIAL_WORDS = [
