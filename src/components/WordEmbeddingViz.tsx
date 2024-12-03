@@ -1,9 +1,9 @@
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { Point } from './Point';
 import * as THREE from 'three';
-import { EmbeddingPoint, SelectedPoint } from '../types';
+import { EmbeddingPoint } from '../types';
 
 
 // Add to the top of the existing component:
@@ -44,9 +44,9 @@ export const WordEmbeddingViz = ({
   // Map the points to use the specified dimensions and ensure they're valid 3D points
   const mappedPoints = points.map(point => {
     // Ensure we have values for all three dimensions
-    const x = point.position[dimensionIndices[0]] * 2 ?? 0;
-    const y = point.position[dimensionIndices[1]] * 2 ?? 0;
-    const z = point.position[dimensionIndices[2]] * 2 ?? 0;
+    const x = point.position[dimensionIndices[0]] * 2 ;
+    const y = point.position[dimensionIndices[1]] * 2 ;
+    const z = point.position[dimensionIndices[2]] * 2 ;
     
     return {
       ...point,
@@ -54,7 +54,7 @@ export const WordEmbeddingViz = ({
     };
   });
 
-  const handlePointClick = (word: string, position: [number, number, number]) => {
+  const handlePointClick = (word: string) => {
     onWordSelect?.(word === selectedWord ? null : word);
     onSelectDim?.(dimensionIndices[0]);
   };
