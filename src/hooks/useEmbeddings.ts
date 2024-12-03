@@ -1,73 +1,86 @@
-import { useState, useEffect } from 'react';
-import { EmbeddingSpace } from '../types';
+import { useState, useEffect, useCallback } from 'react';
+import { EmbeddingSpace, EmbeddingPoint } from '../types';
 import { getEmbedding } from '../services/openai';
-import { reductionMethods } from '../services/dimensionalityReduction';
 
-const ALL_WORDS = [
-  // Countries and capitals
+const INITIAL_WORDS = [
   'france', 'paris', 'japan', 'tokyo', 'italy', 'rome',
-  
-  // Gender pairs
   'king', 'queen', 'man', 'woman', 'father', 'mother',
-  
-  // Time relationships
   'day', 'night', 'summer', 'winter', 'morning', 'evening',
-  
-  // Size relationships
-  'big', 'small', 'giant', 'tiny', 'huge', 'microscopic'
+  'big', 'small', 'giant', 'tiny', 'huge', 'microscopic',
+  'happy', 'sad', 'angry', 'calm', 'excited', 'bored',
+  'dog', 'cat', 'bird', 'fish', 'lion', 'elephant',
+  'red', 'blue', 'green', 'yellow', 'black', 'white',
+  'earth', 'moon', 'sun', 'star', 'planet', 'galaxy'
 ];
 
 export function useEmbeddings() {
+  const [words, setWords] = useState<string[]>(INITIAL_WORDS);
   const [spaces, setSpaces] = useState<EmbeddingSpace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [highDimEmbeddings, setHighDimEmbeddings] = useState<number[][]>([]);
+  const [lastAddedWord, setLastAddedWord] = useState<string | null>(null);
+
+  const updateSpaces = useCallback(async (words: string[], embeddings: number[][]) => {
+    // First, normalize the entire embedding space
+    const allValues = embeddings.flat();
+    const globalMax = Math.max(...allValues);
+    const globalMin = Math.min(...allValues);
+    const globalRange = globalMax - globalMin;
+
+    // Global normalization to [-1, 1]
+    const normalizedEmbeddings = embeddings.map(embedding => 
+      embedding.map(value => {
+        // Add a tiny bit of randomness to prevent perfect alignment
+        const normalizedValue = 2 * ((value - globalMin) / globalRange) - 1;
+        const jitter = (Math.random() - 0.5) * 0.1; // Small random offset
+        return normalizedValue + jitter;
+      })
+    );
+
+    return [{
+      id: "raw",
+      name: "Raw Embedding Space",
+      description: "18-dimensional embedding space",
+      points: words.map((word, idx) => ({
+        word,
+        position: normalizedEmbeddings[idx]
+      }))
+    }];
+  }, []);
+
+  const addWord = async (newWord: string) => {
+    setLoading(true);
+    try {
+      const newEmbedding = await getEmbedding(newWord);
+      const updatedWords = [...words, newWord];
+      
+      const updatedSpaces = await updateSpaces(
+        updatedWords, 
+        [...spaces[0].points.map(p => p.position), newEmbedding]
+      );
+      
+      setWords(updatedWords);
+      setSpaces(updatedSpaces);
+      setLastAddedWord(newWord);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add word');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     async function loadEmbeddings() {
       try {
-        // Get 10D embeddings for all words
         const embeddings = await Promise.all(
-          ALL_WORDS.map(word => getEmbedding(word))
+          words.map(word => getEmbedding(word))
         );
         
-        setHighDimEmbeddings(embeddings);
-
-        // Create three different spaces using different reduction methods
-        const spaces: EmbeddingSpace[] = [
-          {
-            id: "pca",
-            name: "PCA Space",
-            description: "Linear dimensionality reduction preserving global structure",
-            points: ALL_WORDS.map((word, idx) => ({
-              word,
-              position: reductionMethods.pca(embeddings)[idx]
-            }))
-          },
-          {
-            id: "umap",
-            name: "UMAP Space",
-            description: "Non-linear reduction preserving local neighborhoods",
-            points: ALL_WORDS.map((word, idx) => ({
-              word,
-              position: reductionMethods.umap(embeddings)[idx]
-            }))
-          },
-          {
-            id: "tsne",
-            name: "t-SNE Space",
-            description: "Non-linear reduction emphasizing cluster structure",
-            points: ALL_WORDS.map((word, idx) => ({
-              word,
-              position: reductionMethods.tsne(embeddings)[idx]
-            }))
-          }
-        ];
-
-        setSpaces(spaces);
-        setLoading(false);
+        const initialSpaces = await updateSpaces(words, embeddings);
+        setSpaces(initialSpaces);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load embeddings');
+      } finally {
         setLoading(false);
       }
     }
@@ -75,5 +88,5 @@ export function useEmbeddings() {
     loadEmbeddings();
   }, []);
 
-  return { spaces, loading, error, highDimEmbeddings };
+  return { spaces, loading, error, addWord, lastAddedWord };
 }

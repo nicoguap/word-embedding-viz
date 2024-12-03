@@ -7,7 +7,7 @@ export interface EmbeddingSpace {
 
 export interface EmbeddingPoint {
   word: string;
-  position: [number, number, number];
+  position: number[];
 }
 
 export interface PointProps {
